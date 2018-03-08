@@ -38,7 +38,7 @@ def Aggregation(settings, ref, q):
             print("Aggregation by GCAM Region")
             Aggregation['Region_runoff'] = Aggregation_Map(settings, ref.region_ids, ref.region_names, q,
                                                            "GCAMRegion_runoff")
-            print "Country_runoff: unit is ", settings.OutputUnitStr
+            print("Country_runoff: unit is ", settings.OutputUnitStr)
 
     return Aggregation
 
@@ -66,7 +66,9 @@ def Aggregation_Map(settings, Map, Names, runoff, varstr):
     MapId = np.arange(1, maxID + 1, 1, dtype=int).astype(str)
     newdata = np.insert(Map_runoff.astype(str), 0, Names, axis=1)
     Result = np.insert(newdata.astype(str), 0, MapId, axis=1)
-    filename = settings.OutputFolder + varstr + "_" + str(maxID) + "_" + settings.OutputNameStr
+
+    filename = settings.OutputFolder + '/' + varstr + "_" + str(maxID) + "_" + settings.OutputNameStr + '.csv'
+
     writecsvAggregation(filename, Result, settings)
 
     return Map_runoff
@@ -83,5 +85,5 @@ def writecsvAggregation(filename, data, Settings):
             MonthStr[N * 12:(N + 1) * 12] = [str(y) + str(i).zfill(2) for i in range(1, 13)]
         headerline = "ID, Name," + ",".join([k for k in MonthStr]) + ", Unit (" + Settings.OutputUnitStr + ")"
 
-    with open(filename + '.csv', 'w') as outfile:
+    with open(filename, 'w') as outfile:
         np.savetxt(outfile, data, delimiter=',', header=headerline, fmt='%s')

@@ -29,8 +29,7 @@ import matplotlib.pyplot as plt
 from xanthos.data_reader.data_load import load_const_griddata as loadfile
 
 
-def Diagnostics(settings, Q, Avg_ChFlow, ref):
-
+def Diagnostics(settings, Q, ref):
 
     area = ref.area
 

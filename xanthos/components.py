@@ -229,9 +229,7 @@ class Components:
         """
         if self.s.runoff_module == 'gwam':
 
-            rg = runoff_mod.runoffgen(self.pet_t, self.precip[:, nm], np.nan_to_num(self.temp[:, nm]),
-                                      np.nan_to_num(self.dtr[:, nm]), self.s, self.soil_moisture, self.lat_radians,
-                                      self.mth_solar_dec, self.mth_days, self.mth_dr, self.sm_prev)
+            rg = runoff_mod.runoffgen(self.pet_t, self.P, self.s, self.soil_moisture, self.sm_prev)
 
             self.PET[:, nm], self.AET[:, nm], self.Q[:, nm], self.Sav[:, nm] = rg
 
@@ -240,8 +238,8 @@ class Components:
             # run all basins at once in parallel
             rg = runoff_mod.abcd_execute(n_basins=235, basin_ids=self.ref.basin_ids,
                                          pet=self.pet_out, precip=self.precip, tmin=np.nan_to_num(self.temp),
-                                         calib_file=self.s.calib_file, n_months=self.s.nmonths,
-                                         spinup_factor=self.s.SpinUp, jobs=self.s.ro_jobs)
+                                         calib_file=self.s.calib_file, out_dir=self.s.ro_out_dir,
+                                         n_months=self.s.nmonths, spinup_factor=self.s.SpinUp, jobs=self.s.ro_jobs)
 
             self.PET, self.AET, self.Q, self.Sav = rg
 
@@ -251,10 +249,13 @@ class Components:
         """
         if self.s.routing_module == 'mrtm':
 
-            self.flow_dist = fetch.load_routing_data(self.s.FlowDis, self.s.ngridrow, self.s.ngridcol, self.map_index, rep_val=1000)
-            self.flow_dir = fetch.load_routing_data(self.s.FlowDir, self.s.ngridrow, self.s.ngridcol, self.map_index)
+            self.flow_dist = fetch.load_routing_data(self.s.FlowDis, self.s.ngridrow, self.s.ngridcol,
+                                                     self.map_index, rep_val=1000)
+            self.flow_dir = fetch.load_routing_data(self.s.FlowDir, self.s.ngridrow, self.s.ngridcol,
+                                                    self.map_index)
             self.instream_flow = np.zeros((self.s.ncell,), dtype=float)
-            self.str_velocity = fetch.load_routing_data(self.s.strm_veloc, self.s.ngridrow, self.s.ngridcol, self.map_index, rep_val=0)
+            self.str_velocity = fetch.load_routing_data(self.s.strm_veloc, self.s.ngridrow, self.s.ngridcol,
+                                                        self.map_index, rep_val=0)
             self.dsid = routing_mod.downstream(self.coords, self.flow_dir, self.s)
             self.upid = routing_mod.upstream(self.coords, self.dsid, self.s)
             self.um = routing_mod.upstream_genmatrix(self.upid)
@@ -270,7 +271,6 @@ class Components:
         previous channel storage (chs_prev) from previous channel storage.
         """
         if self.s.routing_module == 'mrtm':
-
             sr = routing_mod.streamrouting(self.flow_dist, self.chs_prev, self.instream_flow, self.str_velocity,
                                            self.Q[:, nm], self.ref.area, self.yr_imth_dys[nm, 2],
                                            self.routing_timestep_hours, self.um)
@@ -312,7 +312,6 @@ class Components:
                     t = time.time()
 
                     for nm in range(pet_num_steps):
-
                         # set up climate data for processing
                         # self.prep_arrays(nm)
 
@@ -347,7 +346,6 @@ class Components:
                     t = time.time()
 
                     for nm in range(routing_num_steps):
-
                         self.calculate_routing(nm)
 
                         # update channel storage (chs) array for next step
@@ -371,7 +369,6 @@ class Components:
                     t = time.time()
 
                     for nm in range(pet_num_steps):
-
                         # set up PET data for processing
                         self.prep_pet(nm)
 
@@ -399,7 +396,6 @@ class Components:
                     t = time.time()
 
                     for nm in range(routing_num_steps):
-
                         # channel storage, avg. channel flow (m^3/sec), instantaneous channel flow (m^3/sec)
                         self.calculate_routing(nm)
 
@@ -454,7 +450,7 @@ class Components:
             print("---Start Diagnostics:")
             t0 = time.time()
 
-            Diagnostics(self.s, self.Q, self.Avg_ChFlow, self.ref)
+            Diagnostics(self.s, self.Q, self.ref)
 
             print("---Diagnostics has finished successfully: %s seconds ------" % (time.time() - t0))
 
@@ -465,7 +461,8 @@ class Components:
         print "---Output simulation results:"
         t0 = time.time()
 
-        self.q, self.ac = OUTWriter(self.s, self.ref.area, self.PET, self.AET, self.Q, self.Sav, self.ChStorage, self.Avg_ChFlow)
+        self.q, self.ac = OUTWriter(self.s, self.ref.area, self.PET, self.AET, self.Q, self.Sav, self.ChStorage,
+                                    self.Avg_ChFlow)
 
         print("---Output finished: %s seconds ---" % (time.time() - t0))
 

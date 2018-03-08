@@ -13,7 +13,7 @@ Copyright (c) 2017, Battelle Memorial Institute
 from xanthos.components import Components
 
 
-def hargreaves_gwam_mrtm(config):
+def hargreaves_gwam_mrtm(config, spinup=True):
     """
     Model configuration for the following:
 

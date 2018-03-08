@@ -131,8 +131,6 @@ class ConfigReader:
         else:
             self.pet_module = 'none'
 
-        print 'MODULE!!!!: ', self.pet_module
-
         # runoff
         if ro is not False:
             self.runoff_module = ro['runoff_module'].lower()
