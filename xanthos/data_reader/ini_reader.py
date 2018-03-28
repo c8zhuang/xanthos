@@ -218,12 +218,47 @@ class ConfigReader:
         if clm is not False:
             self.climate = True
             self.OutputNameStr = clm['climate_scenario']
-            self.PrecipitationFile = os.path.join(self.ClimateFolder, clm['PrecipitationFile'])
-            self.PrecipVarName = clm['PrecipVarName']
-            self.TemperatureFile = os.path.join(self.ClimateFolder, clm['TemperatureFile'])
-            self.TempVarName = clm['TempVarName']
-            self.DailyTemperatureRangeFile = os.path.join(self.ClimateFolder, clm['DailyTemperatureRangeFile'])
-            self.DTRVarName = clm['DTRVarName']
+
+            try:
+                self.PrecipitationFile = os.path.join(self.ClimateFolder, clm['PrecipitationFile'])
+            except KeyError:
+                pass
+
+            try:
+                self.PrecipVarName = clm['PrecipVarName']
+            except KeyError:
+                self.PrecipVarName = None
+
+            try:
+                self.TemperatureFile = os.path.join(self.ClimateFolder, clm['TemperatureFile'])
+            except KeyError:
+                pass
+
+            try:
+                self.TempVarName = clm['TempVarName']
+            except KeyError:
+                self.TempVarName = None
+
+            try:
+                self.DailyTemperatureRangeFile = os.path.join(self.ClimateFolder, clm['DailyTemperatureRangeFile'])
+            except KeyError:
+                pass
+
+            try:
+                self.DTRVarName = clm['DTRVarName']
+            except KeyError:
+                self.DTRVarName = None
+
+            try:
+                self.TempMinFile = os.path.join(self.ClimateFolder, clm['TempMinFile'])
+            except KeyError:
+                pass
+
+            try:
+                self.TempMinVarName = clm['TempMinVarName']
+            except KeyError:
+                self.TempMinVarName = None
+
         else:
             self.climate = False
             self.OutputNameStr = self.ProjectName.replace(' ', '_').replace(',', '_').replace(';', '_')
@@ -342,10 +377,10 @@ class ConfigReader:
         print('StartYear - End Year        : {0}-{1}'.format(self.StartYear, self.EndYear))
         print('Number of Months            : {}'.format(self.nmonths))
 
-        if self.climate:
-            print('Precipitation File          : {}'.format(self.PrecipitationFile))
-            print('Temperature File            : {}'.format(self.TemperatureFile))
-            print('Daily Temperature Range File: {}'.format(self.DailyTemperatureRangeFile))
+        # if self.climate:
+        #     print('Precipitation File          : {}'.format(self.PrecipitationFile))
+        #     print('Temperature File            : {}'.format(self.TemperatureFile))
+        #     print('Daily Temperature Range File: {}'.format(self.DailyTemperatureRangeFile))
 
         if self.HistFlag.lower() in ['true', 't', 'yes', 'y', '1']:
             print('Running: Historic Mode')

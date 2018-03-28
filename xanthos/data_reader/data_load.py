@@ -74,7 +74,7 @@ class LoadReferenceData:
             self.addit_water_msm[:, 0] -= 1
 
 
-def load_climate_data(fle, var_name, n_cells, n_months, neg_to_zero=False):
+def load_climate_data(fle, n_cells, n_months, varname=None, neg_to_zero=False):
     """
     Loads and checks input climate data.
 
@@ -90,12 +90,15 @@ def load_climate_data(fle, var_name, n_cells, n_months, neg_to_zero=False):
 
     @:return:               array
     """
-    a = load_const_griddata(fle, 0, var_name)
+    a = load_const_griddata(fle, 0, varname)
 
     if neg_to_zero:
         a[np.where(a < 0)] = 0
 
-    return check_climate_data(a, n_cells=n_cells, n_months=n_months, text=var_name)
+    if varname is None:
+        varname = os.path.splitext(os.path.basename(fle))[0]
+
+    return check_climate_data(a, n_cells=n_cells, n_months=n_months, text=varname)
 
 
 def load_routing_data(fle, ngridrow, ngridcol, map_index, skip=68, rep_val=None):

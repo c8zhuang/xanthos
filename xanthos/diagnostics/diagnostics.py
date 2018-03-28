@@ -36,11 +36,12 @@ def Diagnostics(settings, Q, ref):
     if settings.PerformDiagnostics:
         # Prepare the data
         ny = int(settings.EndYear - settings.StartYear + 1)
+
         # convert the original unit mm/month to new unit km3/year
         q = np.sum(Q[:, :], axis=1) / ny * area / 1e6
-        # ac  = np.sum(Avg_ChFlow[:,:], axis=1)/ny * area/1e6
 
         VIC = loadfile(settings.VICDataFile, 0, "q")  # 67420*30
+
         VICyears = range(1971, 2001)
         try:
             si = VICyears.index(settings.StartYear)
@@ -177,3 +178,8 @@ def Plot_Diagnostics(data, outputname, titlestr, ComparisonDataName):
     plt.ylabel(r'Averaged Annual Runoff ($km^3$/yr)', fontsize=12)
     fig.savefig(outputname + '.png', dpi=300)
     plt.close(fig)
+
+
+if __name__ == '__main__':
+
+    _q = '/users/ladmin/Desktop/temp_xanthos/_q.npy'

@@ -45,19 +45,86 @@ class Components:
         # import desired modules for PET, Runoff, and Routing
         self.import_core()
 
+        # get data required for each module
+        if self.s.pet_module == 'hargreaves':
+
+            # average monthly temperature in degree C
+            self.temp = None #fetch.load_climate_data(self.s.TemperatureFile, self.s.ncell, self.s.nmonths,
+                                                #varname=self.s.TempVarName)
+
+            # monthly average of daily temperature range in degree c
+            self.dtr = None #fetch.load_climate_data(self.s.DailyTemperatureRangeFile, self.s.ncell, self.s.nmonths,
+                                               #varname=self.s.DTRVarName, neg_to_zero=True)
+
+        elif self.s.pet_module == 'penman-monteith':
+
+            # monthly average of minimum daily temperature in degree C
+            self.tmin = fetch.load_climate_data(self.s.DailyTemperatureRangeFile, self.s.ncell, self.s.nmonths,
+                                                varname=self.s.TminVarName)
+
+            # relative humidity in %
+            self.rhs = fetch.load_climate_data(self.s.relative_humidity_file, self.s.ncell, self.s.nmonths,
+                                                varname=self.s.RhsVarName)
+
+            # monthly average surface air temperature degree C
+            self.tair = fetch.load_climate_data(self.s.tair_file, self.s.ncell, self.s.nmonths,
+                                               varname=self.s.TairVarName)
+
+            # relative humidity in %
+            self.rlds = fetch.load_climate_data(self.s.rlds_file, self.s.ncell, self.s.nmonths,
+                                               varname=self.s.rlds_var)
+            # rsds
+            self.rsds = fetch.load_climate_data(self.s.rsds_file, self.s.ncell, self.s.nmonths,
+                                                varname=self.s.rsds_var)
+
+            # literature derived parameters for ET
+            self.pm_params = np.genfromtxt(self.s.pm_param_file, delimiter=',')
+
+            # albedo
+            self.alpha = np.genfromtxt(self.s.albedo_file, delimiter=',')
+
+            # leaf area index average
+            self.lai = np.genfromtxt(self.s.lai_file, delimiter=',')
+
+            # leaf area index minimum
+            self.laimin = np.genfromtxt(self.s.laimin_file, delimiter=',')
+
+            # leaf area index maximum
+            self.laimax = np.genfromtxt(self.s.laimax_file, delimiter=',')
+
+            # land cover data
+            self.lct = np.load(self.s.land_cover_file)
+
+            # elevation data
+            self.elev = np.load(self.s.elev_file)
+
+
+        if self.s.runoff_module == 'gwam':
+
+            # monthly precipitation mm/mth
+            self.precip = fetch.load_climate_data(self.s.PrecipitationFile, self.s.ncell, self.s.nmonths, varname=self.s.PrecipVarName)
+
+            # monthly average daily temperature
+            self.temp = fetch.load_climate_data(self.s.TemperatureFile, self.s.ncell, self.s.nmonths, varname=self.s.TempVarName)
+
+
+
         # climate data
-        if self.s.climate:
-            self.precip = fetch.load_climate_data(self.s.PrecipitationFile, self.s.PrecipVarName, self.s.ncell, self.s.nmonths)
-            self.temp = fetch.load_climate_data(self.s.TemperatureFile, self.s.TempVarName, self.s.ncell, self.s.nmonths)
-            self.dtr = fetch.load_climate_data(self.s.DailyTemperatureRangeFile, self.s.DTRVarName, self.s.ncell, self.s.nmonths, neg_to_zero=True)
+        if self.s.climate and self.s.runoff_module == 'hargreaves':
+
+            self.precip = fetch.load_climate_data(self.s.PrecipitationFile, self.s.ncell, self.s.nmonths, varname=self.s.PrecipVarName)
+            self.temp = fetch.load_climate_data(self.s.TemperatureFile, self.s.ncell, self.s.nmonths, varname=self.s.TempVarName)
+
+
 
         # reference data
         self.ref = fetch.LoadReferenceData(self.s)
         self.coords = self.ref.coords
         self.latitude = np.copy(self.coords[:, 2])
-        self.lat_radians = self.latitude * np.pi / 180.
+        self.lat_radians = np.radians(self.latitude) # * np.pi / 180.
         self.yr_imth_dys = helper.set_month_arrays(self.s.nmonths, self.s.StartYear, self.s.EndYear)
         self.map_index = um.sub2ind([self.s.ngridrow, self.s.ngridcol], self.coords[:, 4].astype(int) - 1, self.coords[:, 3].astype(int) - 1)
+
         sft = helper.calc_sinusoidal_factor(self.yr_imth_dys)
         self.solar_dec = sft[0]
         self.dr = sft[1]
@@ -67,7 +134,7 @@ class Components:
             self.mth_temp_pet = None
             self.mth_dtr_pet = None
             self.pet_t = None
-            self.pet_out = np.zeros_like(self.precip)
+            self.pet_out = None #np.zeros_like(self.precip)
 
         elif self.s.pet_module == 'penman-monteith':
             self.pet_out = np.zeros_like(self.precip)
@@ -216,10 +283,11 @@ class Components:
                 self.sm_prev = fetch.load_soil_data(self.s)
 
         elif self.s.runoff_module == 'abcd':
-            self.P = np.copy(self.precip)  # keep nan in P
-            self.T = np.nan_to_num(self.temp)  # nan to zero
-            self.D = np.nan_to_num(self.dtr)  # nan to zero
-            self.pet_out = np.zeros_like(self.precip)
+            # self.P = np.copy(self.precip)  # keep nan in P
+            # self.T = np.nan_to_num(self.temp)  # nan to zero
+            # self.D = np.nan_to_num(self.dtr)  # nan to zero
+            # self.pet_out = np.zeros_like(self.precip)
+            pass
 
     def calculate_runoff(self, nm=None):
         """
@@ -235,11 +303,31 @@ class Components:
 
         elif self.s.runoff_module == 'abcd':
 
+            # np.save('/users/ladmin/Desktop/temp_xanthos/basin_ids.npy', self.ref.basin_ids)
+
+            # f_pet = '/users/ladmin/Google Drive/work/xanthos/new_pet/PET_output/penman_monteith_pet_watch_static1970lc_1951_2005.npy'
+            # f_pet = '/users/ladmin/Desktop/pet_pm_result.npy'
+            # f_pet = '/users/ladmin/Google Drive/work/xanthos/new_pet/global_pet_1971_1990_staticland1971.npy'
+            f_pet = '/users/ladmin/Desktop/penman_monteith/penman_monteith_watch_1971_1990_1970lc.npy'
+
+            # f_pr = '/users/ladmin/Google Drive/work/xanthos/new_pet/Python_input/watch_pr_1951_2005.npy'
+            # f_tmin = '/users/ladmin/Google Drive/work/xanthos/new_pet/Python_input/watch_tmin_1951_2005.npy'
+
+            f_pr = '/users/ladmin/Desktop/watch_pm_abcd_inputs_1971_1990/prec_1971_1990_mmmth.npy'
+            f_tmin = '/users/ladmin/Desktop/watch_pm_abcd_inputs_1971_1990/tmin_1971_1990.mat'
+            self.s.nmonths = 240
+
+            import scipy.io as sio
+            self.pet_out = np.load(f_pet)
+            # self.precip = sio.loadmat(f_pr)['prec_1971_1990']
+            self.precip = np.load(f_pr)
+            tmin = sio.loadmat(f_tmin)['TMIN_1971_1990']
+
             # run all basins at once in parallel
             rg = runoff_mod.abcd_execute(n_basins=235, basin_ids=self.ref.basin_ids,
-                                         pet=self.pet_out, precip=self.precip, tmin=np.nan_to_num(self.temp),
-                                         calib_file=self.s.calib_file, out_dir=self.s.ro_out_dir,
-                                         n_months=self.s.nmonths, spinup_factor=self.s.SpinUp, jobs=self.s.ro_jobs)
+                                         pet=self.pet_out, precip=self.precip, tmin=np.nan_to_num(tmin),
+                                         calib_file=self.s.calib_file, n_months=self.s.nmonths,
+                                         spinup_factor=self.s.SpinUp, jobs=self.s.ro_jobs)
 
             self.PET, self.AET, self.Q, self.Sav = rg
 
@@ -313,7 +401,7 @@ class Components:
 
                     for nm in range(pet_num_steps):
                         # set up climate data for processing
-                        # self.prep_arrays(nm)
+                        self.prep_arrays(nm)
 
                         # set up PET data for processing
                         self.prep_pet(nm)
